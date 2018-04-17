@@ -46,6 +46,8 @@ model.len = len;
 
 len0 = 1 + cumsum([0; len(1:end-1)]);
 len1 = cumsum(len);
+model.len0 = len0;
+model.len1 = len1;
 
 DB = zeros(size(X), 'single');  % DB stores D*B
  

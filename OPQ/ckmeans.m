@@ -2,7 +2,7 @@
 % data points) and generates m subspaces with h centers in each. As a
 % result a total of h^m centers can be represented.
 
-function [model, B] = ckmeans(X, m, h, niter, init)
+function [model, B] = ckmeans(X, m, h, niter, init, use_coc)
 
 % Inputs:
 %       X: p*n -- n p-dimensional input points used for training the quantizer.
@@ -32,21 +32,34 @@ end
 nbits = sum(log2(h));
 model.h = h;
 model.nbits = nbits;
-
+d = p/2;
 % len: an m-dim array the i-th element of which, i.e. len(i), stores
 %      the dimensionality of the i-th subspace.
-len = ones(m, 1) * floor(p / m);
-len(1:mod(p, m)) = len(1:mod(p, m)) + 1;  % p = m * floor(p / m) + mod(p, m)
+len = ones(m, 1) * floor(d / m);
+len(1:mod(p, m)) = len(1:mod(d, m)) + 1;  % p = m * floor(p / m) + mod(p, m)
 model.len = len;
 
-len0 = 1 + cumsum([0; len(1:end-1)]);
-len1 = cumsum(len);
+model.len0 = 1 + cumsum([0; len(1:end-1)]);
+model.len1 = cumsum(len);
+if use_coc
+% if false
+    fprintf('=========bps:    ');
+    bps = sort(randperm(d-1, m-1));
+    model.len0 = [1 bps]';
+    model.len1 = [bps-1 d]';
+%     model.len0 = [1 9 33 73];
+%     model.len1 = [8 32 72 128];
+    model.coc_idx = cell(4:1);
+    for i=1:m,
+        model.coc_idx{i} = [model.len0(i): model.len1(i)]';
+    end
+end
 
-DB = zeros(size(X), 'single');  % DB stores D*B
+DB = zeros(d, n, 'single');  % DB stores D*B
 
 if (strcmp(init, 'natural'))
   % initialize R by identity matrix
-  R = eye(p, p, 'single'); % Default
+  R = eye(p, d, 'single'); % Default
 elseif (strcmp(init, 'random'))
   % initialize R by random rotation
   [R, S, V] = svd(randn(p, p));
@@ -68,20 +81,24 @@ model.initR = R;
 
 RX = R' * X;
 
+% if (use_coc)
+%    [RX, model] = coc_reorder(RX, model, m);
+% end
+
 % initialize D
 D = cell(m, 1);
 
 % inializing D by random selection of subspace centers (after rotation).
 for (i=1:m)
   perm = randperm(n, h(i));
-  D{i} = RX(len0(i):len1(i), perm);
+  D{i} = RX(model.len0(i):model.len1(i), perm);
 end
 
 % initialize B
 B = zeros(n, m, 'int32');
 for (i=1:m)
-  B(:, i) = euc_nn_mex(D{i}, RX(len0(i):len1(i), :));
-  DB(len0(i):len1(i), :) = D{i}(:, B(:, i));
+  B(:, i) = euc_nn_mex(D{i}, RX(model.len0(i):model.len1(i), :));
+  DB(model.len0(i):model.len1(i), :) = D{i}(:, B(:, i));
 end
 
 for (iter=0:niter)
@@ -104,25 +121,43 @@ for (iter=0:niter)
   end
   
   % update R
-  [U, S, V] = svd(X * DB', 0);
+  [U, ~, V] = svd(X * DB', 0);
   R = U * V';
   clear U S V;
   
   % update R*X
   RX = R' * X;
   
+%   if (use_coc)
+%      [RX, model] = coc_reorder(RX, model, m);
+%   end
+  
   for (i=1:m)
     % update D
-    D{i} = kmeans_iter_mex(RX(len0(i):len1(i), :), B(:, i), h(i));
+    D{i} = kmeans_iter_mex(RX(model.len0(i):model.len1(i), :), B(:, i), h(i));
     % update B
-    B(:, i) = euc_nn_mex(D{i}, RX(len0(i):len1(i), :));
-    % TODO: remove [B(:, i) b] = yael_nn(D{i}, RX(len0(i):len1(i), :), 1, 2);
+    B(:, i) = euc_nn_mex(D{i}, RX(model.len0(i):model.len1(i), :));
+    % TODO: remove [B(:, i) b] = yael_nn(D{i}, RX(model.len0(i):model.len1(i), :), 1, 2);
     % update D*B
-    DB(len0(i):len1(i), :) = D{i}(:, B(:, i));
+    DB(model.len0(i):model.len1(i), :) = D{i}(:, B(:, i));
   end
 end
 
-for (i=1:m)
+if false
+% if use_coc
+  [RX, model] = coc_reorder(RX, model, m);
+  for (i=1:m)
+    % update D
+    D{i} = kmeans_iter_mex(RX(model.len0(i):model.len1(i), :), B(:, i), h(i));
+    % update B
+    B(:, i) = euc_nn_mex(D{i}, RX(model.len0(i):model.len1(i), :));
+    % TODO: remove [B(:, i) b] = yael_nn(D{i}, RX(model.len0(i):model.len1(i), :), 1, 2);
+    % update D*B
+    DB(model.len0(i):model.len1(i), :) = D{i}(:, B(:, i));
+  end
+end
+
+ for (i=1:m)
   model.centers{i} = D{i};
 end
 model.R = R;

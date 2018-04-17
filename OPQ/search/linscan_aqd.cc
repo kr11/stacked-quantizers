@@ -37,8 +37,9 @@ REAL inline sqr(REAL d) {
  */
 void linscan_aqd_query(REAL* dists, UINT32* res, UINT8* codes, REAL* centers,
                        REAL* queries, int N, UINT32 NQ, int B, int K,
-                       int dim1codes, int dim1queries, int subdim) {
+                       int dim1codes, int dim1queries, int* sub_lens) {
   int B_over_8 = B / 8;
+  printf("B: %d, B_over_8: %d\n",B, B_over_8);
   REAL * pqueries = queries;
   pair<REAL,UINT32> * pairs;
 
@@ -68,9 +69,17 @@ void linscan_aqd_query(REAL* dists, UINT32* res, UINT8* codes, REAL* centers,
         for (int r = 0; r < (1 << 8); r++) {
           int t = k * (1 << 8) + r;
           dis_from_q[t] = 0;
-          for (int s = 0; s < subdim; s++)
-            dis_from_q[t] +=
-              sqr(centers[t * subdim + s] - pqueries[k * subdim + s]);
+            //k*(1<<8), i.e. 4*256
+
+//        for (int s = 0; s < subdim; s++)
+//            dis_from_q[t] +=
+//              sqr(centers[t * subdim + s] - pqueries[k * subdim + s]);
+          
+          int start = (k == 0) ? 0 : sub_lens[k-1];
+          int end = sub_lens[k];
+
+          for (int s = start; s < end; s++)
+             dis_from_q[t] += sqr(centers[r * dim1queries + s]  - pqueries[s]);
         }
       }
 
