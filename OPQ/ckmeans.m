@@ -32,7 +32,7 @@ end
 nbits = sum(log2(h));
 model.h = h;
 model.nbits = nbits;
-d = p/2;
+d = p;
 % len: an m-dim array the i-th element of which, i.e. len(i), stores
 %      the dimensionality of the i-th subspace.
 len = ones(m, 1) * floor(d / m);
@@ -47,9 +47,9 @@ if use_coc
     bps = sort(randperm(d-1, m-1));
     model.len0 = [1 bps]';
     model.len1 = [bps-1 d]';
-%     model.len0 = [1 9 33 73];
-%     model.len1 = [8 32 72 128];
-    model.coc_idx = cell(4:1);
+    model.len0 = [1 12 32 82]';
+    model.len1 = [11 31 81 96]';
+    model.coc_idx = cell(m:1);
     for i=1:m,
         model.coc_idx{i} = [model.len0(i): model.len1(i)]';
     end

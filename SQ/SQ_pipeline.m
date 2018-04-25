@@ -56,16 +56,16 @@ for i = 1:NITS,
         end
 
         codes2update = CODES( j, :);
-        
+         
         % Update codebook using the implementation of @norouzi.
         k = size( CODEBOOOKS{j}, 2 );
         new_codebook = kmeans_iter_mex( Xd, int32( codes2update' ), k );
-
-        % Add singletons to the codebook.
+    
+        % Add singletons to the codebook. 
         aa = true(k, 1);
         aa( codes2update ) = false;
-        new_codebook( :, aa ) = singletons{2};
-        
+        new_codebook( :, aa ) = singletons{2};% center not appeared is set to []?
+        % 
         CODEBOOOKS{j} = new_codebook;
         
         if V, fprintf('done in %.2f seconds.\n', toc); end

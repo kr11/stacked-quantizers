@@ -8,9 +8,9 @@ clear
 addpath(genpath(pwd));
 
 
-data_set_name = 'CONVNET_DATASET';
+% data_set_name = 'CONVNET_DATASET';
 % data_set_name = 'SIFT_DATASET';
-% data_set_name = 'DEEP_DATASET';
+data_set_name = 'DEEP_DATASET';
 % data_set_name = 'GIST_DATASET';
 
 nquery = 10000;
@@ -20,10 +20,12 @@ K = 1;  % K is the number of nearest neigher
 % execute algorithm
 PQ_EXE = 0;
 PQ_COC_EXE = 0;
-OPQ_EXE = 1;
-OPQ_COC_EXE = 1;
+OPQ_EXE = 0;
+OPQ_COC_EXE = 0;
 RPQ_EXE = 0;
 RPQ_COC_EXE = 0;
+SQ_EXE = 1;
+AQ_EXE = 0;
 
 %% Set train and search parameters
 m       = 4;   % Number of subcodebooks.
@@ -142,7 +144,7 @@ end
 
 %% === OPQ_COC ===
 if OPQ_COC_EXE == 1
-    for i=1:10
+    for i=1:1
         fprintf('iter:%d\n', i);
         fprintf('=== OPQ: %d codebooks. ===\n', m);
 
@@ -213,57 +215,59 @@ if RPQ_EXE == 1
     pause(0.5);
 end
  
-% %% === SQ ===
-% fprintf('=== SQ ncodebooks %d ===.\n', m);
-% 
-% % Train
-% [~, codebooks] = SQ_pipeline( X_train, h, m, nitsSQ, verbose );
-% 
-% % Quantize the database
-% cbase = SQ_encode( X_base, codebooks, verbose );
-% 
-% % Compute database l2 norms.
-% dbnorms = single( sum( SQ_decode( cbase,  codebooks ).^2, 1 ) );
-% 
-% % Convert cbase to uint8
-% cbase = uint8( cbase -1 );
-% 
-% fprintf('Searching... '); tic;
-% [~, idx] = SQ_search( cbase, codebooks, X_test, dbnorms, selectivity);
-% fprintf('done in %.2f seconds\n', toc);
-% 
-% % Plot recall@N curve
-% recall_at_k_aqd_sq = eval_recall_vs_sel( double(idx'), nquery, double(gt'), K, 10000 );
-% semilogx( recall_at_k_aqd_sq, 'm-', 'linewidth', 2 );
-% legend('PQ', 'OPQ', 'SQ', 'location', 'northwest');
-% pause(15);
-% 
-% 
-% %% === AQ === 
-% fprintf('=== AQ ncodebooks %d ===.\n', m);
-% 
-% % Train
-% [codes, codebooks, distortions, R] = AQ_pipeline( X_train, h(ones(1,m)), nitsAQ, N_train, verbose );
-% 
-% % Quantize the database
-% fprintf('Encoding the database; this is gonna take a while... '); tic;
-% cbase = AQ_encoding( R'*X_base, codebooks, N_base, verbose );
-% fprintf('done in %.2f seconds\n', toc);
-% 
-% % Compute database l2 norms.
-% dbnorms = single( sum( SQ_decode( cbase,  codebooks ).^2, 1 ) );
-% 
-% % Convert cbase to uint8
-% cbase = uint8( cbase -1 );
-% 
-% fprintf('Searching... '); tic;
-% for i = 1:numel(codebooks), codebooks{i} = single( codebooks{i} ); end
-% [~, idx] = SQ_search( cbase, codebooks, X_test, dbnorms, selectivity);
-% fprintf('done in %.2f seconds\n', toc);
-% 
-% % Plot recall@N curve
-% recall_at_k_aqd_aq = eval_recall_vs_sel( double(idx'), nquery, double(gt'), K, 10000 );
-% semilogx( recall_at_k_aqd_aq, 'k-', 'linewidth', 2 );
-% legend('PQ', 'OPQ', 'SQ', 'AQ', 'location', 'northwest');
+%% === SQ ===
+if SQ_EXE == 1
+    fprintf('=== SQ ncodebooks %d ===.\n', m);
 
+    % Train
+    [~, codebooks] = SQ_pipeline( X_train, h, m, nitsSQ, verbose );
+
+    % Quantize the database
+    cbase = SQ_encode( X_base, codebooks, verbose );
+
+    % Compute database l2 norms.
+    dbnorms = single( sum( SQ_decode( cbase,  codebooks ).^2, 1 ) );
+
+    % Convert cbase to uint8
+    cbase = uint8( cbase -1 );
+
+    fprintf('Searching... '); tic;
+    [~, idx] = SQ_search( cbase, codebooks, X_test, dbnorms, selectivity);
+    fprintf('done in %.2f seconds\n', toc);
+
+    % Plot recall@N curve
+    recall_at_k_aqd_sq = eval_recall_vs_sel( double(idx'), nquery, double(gt'), K, 10000 );
+    semilogx( recall_at_k_aqd_sq, 'm-', 'linewidth', 2 );
+    legend('PQ', 'OPQ', 'SQ', 'location', 'northwest');
+    pause(15);
+end
+
+if AQ_EXE == 1
+    %% === AQ === 
+    fprintf('=== AQ ncodebooks %d ===.\n', m);
+
+    % Train
+    [codes, codebooks, distortions, R] = AQ_pipeline( X_train, h(ones(1,m)), nitsAQ, N_train, verbose );
+
+    % Quantize the database
+    fprintf('Encoding the database; this is gonna take a while... '); tic;
+    cbase = AQ_encoding( R'*X_base, codebooks, N_base, verbose );
+    fprintf('done in %.2f seconds\n', toc);
+
+    % Compute database l2 norms.
+    dbnorms = single( sum( SQ_decode( cbase,  codebooks ).^2, 1 ) );
+
+    % Convert cbase to uint8
+    cbase = uint8( cbase -1 );
+
+    fprintf('Searching... '); tic;
+    for i = 1:numel(codebooks), codebooks{i} = single( codebooks{i} ); end
+    [~, idx] = SQ_search( cbase, codebooks, X_test, dbnorms, selectivity);
+    fprintf('done in %.2f seconds\n', toc);
+
+    % Plot recall@N curve
+    recall_at_k_aqd_aq = eval_recall_vs_sel( double(idx'), nquery, double(gt'), K, 10000 );
+    semilogx( recall_at_k_aqd_aq, 'k-', 'linewidth', 2 );
+    legend('PQ', 'OPQ', 'SQ', 'AQ', 'location', 'northwest');
+end
 

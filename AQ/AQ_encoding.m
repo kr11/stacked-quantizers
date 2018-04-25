@@ -175,9 +175,9 @@ parfor i = 1:n,
     % The best encoding found during the last iteration.
     CODES(:,i) = full2ordered( sort(best_encoding(:,1)) );
     % The distortion of such encoding.
-    if nargout > 1,
-        DISTORTIONS(i) = didx(1) + q'*q;
-    end
+%     if nargout > 1,
+%         DISTORTIONS(i) = didx(1) + q'*q;
+%     end
     
     if V && ~mod(i,10000),
         fprintf('Done with %d / %d; %.2f%%.\n', i, n, 100*i/n);
