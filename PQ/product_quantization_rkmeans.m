@@ -43,10 +43,11 @@ model.nbits = nbits;
 len = ones(m, 1) * floor(p / m);
 len(1:mod(p, m)) = len(1:mod(p, m)) + 1;  % p = m * floor(p / m) + mod(p, m)
 model.len = len;
-% change
-%len0 = 1 + cumsum([0; len(1:end-1)]);
-%len1 = cumsum(len);
 
+len0 = 1 + cumsum([0; len(1:end-1)]);
+len1 = cumsum(len);
+model.len0 = len0;
+model.len1 = len1;
 
 DB = zeros(size(X), 'single');  % DB stores D*B
  
@@ -55,52 +56,24 @@ R       = eye(p, p, 'single');
 model.R = R;
 RX      = X;
 
-% change
-% kmeans for each dimension
-[idx, ~] = kmeans(RX, m, 'Start', 'plus');
-coc_idx = cell(m:1);
-for i=1:m
-    coc_idx{i} = find(idx == i);
-end
-%reordering RX
-RX = RX(cat(1, coc_idx{:}),:);
-cluster_sizes = cellfun(@(x)size(x,1), coc_idx);
-len0 = 1 + cumsum([0 cluster_sizes(1:end-1)]);
-len1 = cumsum(cluster_sizes);
-model.coc_idx = coc_idx;
-model.len0 = len0;
-model.len1 = len1;
-
-% after reordering
-% len0 = 1 + cumsum([0; len(1:end-1)]);
-% len1 = cumsum(len);
-% model.len0 = len0;
-% model.len1 = len1;
-
-% model.coc_idx = coc_idx;
-
 % initialize D
 D = cell(m, 1);
 
 % inializing D by random selection of subspace centers (after rotation).
-for i=1:m
+for i=1:m,
   perm = randperm(n, h(i));
-  % change
   D{i} = RX(len0(i):len1(i), perm);
-%   D{i} = RX(coc_idx{i}, perm);
 end
 
 % initialize B
 B = zeros(n, m, 'int32');
-for i=1:m
+for i=1:m,
   B(:, i) = euc_nn_mex(D{i}, RX(len0(i):len1(i), :));
   DB(len0(i):len1(i), :) = D{i}(:, B(:, i));
-  %B(:, i) = euc_nn_mex(D{i}, RX(coc_idx{i}, :));
-  %DB(coc_idx{i}, :) = D{i}(:, B(:, i));
 end
 
-for iter=0:niter
-  if mod(iter, 10) == 0
+for iter=0:niter,
+  if mod(iter, 10) == 0,
     objlast = obj;
     tmp = R * DB;
     tmp = tmp - X;
@@ -118,9 +91,11 @@ for iter=0:niter
     break;
   end
   
-  for i=1:m
+  for i=1:m,
     % update D
     D{i} = kmeans_iter_mex(RX(len0(i):len1(i), :), B(:, i), h(i));
+    
+    
     % add========================
 %     X = [1 3 2 1 2;1 3 2 1 2];
 %     B = [1, 3, 2,1,2];
@@ -129,13 +104,13 @@ for iter=0:niter
     D_norm = sqrt(sum(D{i}.*D{i})); % d * h
     X_norm = sqrt(sum(RX(len0(i):len1(i), :) .* RX(len0(i):len1(i), :))); % d * N
     DX_norm = zeros(N, 1);
-    cos_sum = zeros(1, h{i});
+    cos_sum = zeros(1, h(i));
     for j=1:N
         cen_of_j = B(j, i);
         cos_X(j) = 1+dot(D{i}(:,cen_of_j), RX(len0(i):len1(i), j)) / D_norm(cen_of_j) / X_norm(j);
         cos_sum(cen_of_j) = cos_sum(cen_of_j) + cos_X(j);
     end
-    D{i} = zeros(d, h{i});
+    D{i} = single(zeros(size(D{i})));
     for j=1:N
         cen_of_j = B(j, i);
         D{i}(:, cen_of_j) = D{i}(:, cen_of_j) + cos_X(j)/cos_sum(cen_of_j) * RX(len0(i):len1(i), j);
@@ -144,14 +119,13 @@ for iter=0:niter
     
     % update B
     B(:, i) = euc_nn_mex(D{i}, RX(len0(i):len1(i), :));
-   %B(:, i) = euc_nn_mex(D{i}, RX(coc_idx{i}, :));
-    
+
     % update D*B
     DB(len0(i):len1(i), :) = D{i}(:, B(:, i));
   end
 end
 
-for i=1:m
+for i=1:m,
   model.centers{i} = D{i};
 end
 

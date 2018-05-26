@@ -29,7 +29,7 @@ SQ_EXE = 0;
 AQ_EXE = 0;
 
 %% Set train and search parameters
-m       = 8;   % Number of subcodebooks.
+m       = 4;   % Number of subcodebooks.
 h       = 256; % Number of cluster centres per subcodebook.
 nbits   = log2(h) * m;  % Number of bits in the final code.
 
@@ -46,7 +46,9 @@ N_base  = 64; % Pool size for beam search in AQ during database encoding.
 
 selectivity = 10000; % Number of nearest-neighbours to retrieve.
 
-
+semilogx( zeros(selectivity, 1), 'b-', 'linewidth', 0.1 );
+grid on; hold on; xlabel('N'); ylabel('Recall@N');
+    
 %% === PQ (no preprocessing) ===
 if PQ_EXE == 1
     fprintf('=== PQ: %d codebooks. ===\n', m);
@@ -69,11 +71,10 @@ if PQ_EXE == 1
     % Plot recall@N curve
     recall_at_k_aqd_pq = eval_recall_vs_sel( double(ids_aqd'), nquery, double(gt'), K, selectivity );
     semilogx( recall_at_k_aqd_pq, 'b-', 'linewidth', 2 ); 
-    grid on; hold on; xlabel('N'); ylabel('Recall@N');
     legend('PQ', 'location', 'northwest');
     pause(0.5);
 end
-%% === PQ (no preprocessing) ===
+%% === PQ RK (no preprocessing) ===
 if PQ_RK_EXE == 1
     fprintf('=== PQ: %d codebooks. ===\n', m);
 
@@ -93,10 +94,10 @@ if PQ_RK_EXE == 1
     fprintf('done in %.2f seconds\n', toc);
 
     % Plot recall@N curve
-    recall_at_k_aqd_pq = eval_recall_vs_sel( double(ids_aqd'), nquery, double(gt'), K, selectivity );
-    semilogx( recall_at_k_aqd_pq, 'b-', 'linewidth', 2 ); 
-    grid on; hold on; xlabel('N'); ylabel('Recall@N');
-    legend('PQ', 'location', 'northwest');
+    recall_at_k_aqd_pq_rk = eval_recall_vs_sel( double(ids_aqd'), nquery, double(gt'), K, selectivity );
+    semilogx( recall_at_k_aqd_pq_rk, 'm-', 'linewidth', 2 ); 
+%     grid on; hold on; xlabel('N'); ylabel('Recall@N');
+    legend('PQ', 'PQ_RK', 'location', 'northwest');
     pause(0.5);
 end
 %% === PQ_COC (no preprocessing) ===
