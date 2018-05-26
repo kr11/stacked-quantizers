@@ -63,7 +63,7 @@ void mexFunction( int nlhs, mxArray *plhs[],
     mexErrMsgTxt("Number of DBNORMS seems too small.");
 
     long normspassed = mdbnorms > ndbnorms ? mdbnorms : ndbnorms;
-
+    printf("nlevels %d, ncodes %d, mdbnorms %d, ndbnorms %d, normspassed %d\n", nlevels, ncodes, mdbnorms, ndbnorms, normspassed);
     if ( normspassed != ncodes )
     mexErrMsgTxt("Number of DBNORMS not equal to number of codes.");
 
@@ -77,7 +77,8 @@ void mexFunction( int nlhs, mxArray *plhs[],
 
     // Assuming that the codebooks have all the same number of elements.
     long codebooksz = (long) mxGetN( mxGetCell( CODEBOOKS, 1 ));
-
+    printf("mcodebooks %d, ncodebooks %d, passedcodebooks %d, codebooksz %d\n", mcodebooks, ncodebooks,passedcodebooks, codebooksz);
+    
     // ===== Get pointers to the input. =====
     unsigned char  *codesp     = (unsigned char*)  mxGetPr( CODES );
     float *queriesp   = (float*) mxGetPr( QUERIES );

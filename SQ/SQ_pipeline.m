@@ -61,6 +61,7 @@ for i = 1:NITS,
         k = size( CODEBOOOKS{j}, 2 );
         new_codebook = kmeans_iter_mex( Xd, int32( codes2update' ), k );
     
+        % for singleton centers
         % Add singletons to the codebook. 
         aa = true(k, 1);
         aa( codes2update ) = false;

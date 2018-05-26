@@ -19,16 +19,17 @@ K = 1;  % K is the number of nearest neigher
 
 % execute algorithm
 PQ_EXE = 0;
+PQ_RK_EXE = 1;
 PQ_COC_EXE = 0;
 OPQ_EXE = 0;
 OPQ_COC_EXE = 0;
 RPQ_EXE = 0;
 RPQ_COC_EXE = 0;
-SQ_EXE = 1;
+SQ_EXE = 0;
 AQ_EXE = 0;
 
 %% Set train and search parameters
-m       = 4;   % Number of subcodebooks.
+m       = 8;   % Number of subcodebooks.
 h       = 256; % Number of cluster centres per subcodebook.
 nbits   = log2(h) * m;  % Number of bits in the final code.
 
@@ -67,10 +68,36 @@ if PQ_EXE == 1
 
     % Plot recall@N curve
     recall_at_k_aqd_pq = eval_recall_vs_sel( double(ids_aqd'), nquery, double(gt'), K, selectivity );
-    % semilogx( recall_at_k_aqd_pq, 'b-', 'linewidth', 2 ); 
-    % grid on; hold on; xlabel('N'); ylabel('Recall@N');
-    % legend('PQ', 'location', 'northwest');
-    % pause(0.5);
+    semilogx( recall_at_k_aqd_pq, 'b-', 'linewidth', 2 ); 
+    grid on; hold on; xlabel('N'); ylabel('Recall@N');
+    legend('PQ', 'location', 'northwest');
+    pause(0.5);
+end
+%% === PQ (no preprocessing) ===
+if PQ_RK_EXE == 1
+    fprintf('=== PQ: %d codebooks. ===\n', m);
+
+    % Train
+    [model, ~] = product_quantization_rkmeans( X_train, m, h, nitsOPQ );
+
+    % Quantize the database
+    cbase = uint8( quantize_by_ckmeans(X_base, model, false) -1 );
+
+    % Search
+    centers = double(cat(1, model.centers{:}));
+    npoints = size(cbase, 2);
+
+    fprintf('Searching... '); tic;
+    queryR       = double( model.R' * X_test );
+    [ids_aqd, ~] = linscan_aqd_knn_mex(cbase, queryR, npoints, nbits, selectivity, centers, int32(model.len1));
+    fprintf('done in %.2f seconds\n', toc);
+
+    % Plot recall@N curve
+    recall_at_k_aqd_pq = eval_recall_vs_sel( double(ids_aqd'), nquery, double(gt'), K, selectivity );
+    semilogx( recall_at_k_aqd_pq, 'b-', 'linewidth', 2 ); 
+    grid on; hold on; xlabel('N'); ylabel('Recall@N');
+    legend('PQ', 'location', 'northwest');
+    pause(0.5);
 end
 %% === PQ_COC (no preprocessing) ===
 if PQ_COC_EXE == 1
@@ -270,4 +297,4 @@ if AQ_EXE == 1
     semilogx( recall_at_k_aqd_aq, 'k-', 'linewidth', 2 );
     legend('PQ', 'OPQ', 'SQ', 'AQ', 'location', 'northwest');
 end
-
+saveas(gcf,'myfig.jpg')
