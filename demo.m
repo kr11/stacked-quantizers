@@ -5,6 +5,7 @@
 
 clc
 clear
+clf
 addpath(genpath(pwd));
 
 
@@ -18,7 +19,7 @@ K = 1;  % K is the number of nearest neigher
 [ X_train, X_test, X_base, gt, nquery ] = get_data( data_set_name, nquery, K);
 
 % execute algorithm
-PQ_EXE = 0;
+PQ_EXE = 1;
 PQ_RK_EXE = 1;
 PQ_COC_EXE = 0;
 OPQ_EXE = 0;
@@ -46,8 +47,7 @@ N_base  = 64; % Pool size for beam search in AQ during database encoding.
 
 selectivity = 10000; % Number of nearest-neighbours to retrieve.
 
-semilogx( zeros(selectivity, 1), 'b-', 'linewidth', 0.1 );
-grid on; hold on; xlabel('N'); ylabel('Recall@N');
+% semilogx( zeros(selectivity, 1), 'b-', 'linewidth', 0.1 );
     
 %% === PQ (no preprocessing) ===
 if PQ_EXE == 1
@@ -71,6 +71,7 @@ if PQ_EXE == 1
     % Plot recall@N curve
     recall_at_k_aqd_pq = eval_recall_vs_sel( double(ids_aqd'), nquery, double(gt'), K, selectivity );
     semilogx( recall_at_k_aqd_pq, 'b-', 'linewidth', 2 ); 
+    grid on; hold on; xlabel('N'); ylabel('Recall@N');
     legend('PQ', 'location', 'northwest');
     pause(0.5);
 end
@@ -96,8 +97,8 @@ if PQ_RK_EXE == 1
     % Plot recall@N curve
     recall_at_k_aqd_pq_rk = eval_recall_vs_sel( double(ids_aqd'), nquery, double(gt'), K, selectivity );
     semilogx( recall_at_k_aqd_pq_rk, 'm-', 'linewidth', 2 ); 
-%     grid on; hold on; xlabel('N'); ylabel('Recall@N');
-    legend('PQ', 'PQ_RK', 'location', 'northwest');
+    grid on; hold on; xlabel('N'); ylabel('Recall@N');
+    legend('PQ', 'PQ\_RK', 'location', 'northwest');
     pause(0.5);
 end
 %% === PQ_COC (no preprocessing) ===
@@ -298,4 +299,6 @@ if AQ_EXE == 1
     semilogx( recall_at_k_aqd_aq, 'k-', 'linewidth', 2 );
     legend('PQ', 'OPQ', 'SQ', 'AQ', 'location', 'northwest');
 end
-saveas(gcf,'myfig.jpg')
+plan_name = 'refine_kmeans';
+title([plan_name, '-', data_set_name]);
+saveas(gcf,[plan_name, '_', data_set_name, '.jpg'])
