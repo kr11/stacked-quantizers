@@ -301,4 +301,4 @@ if AQ_EXE == 1
 end
 plan_name = 'refine_kmeans';
 title([plan_name, '-', data_set_name]);
-saveas(gcf,[plan_name, '_', data_set_name, '.jpg'])
+saveas(gcf,['result/', plan_name, '_', data_set_name, '.jpg'])
