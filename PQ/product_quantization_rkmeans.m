@@ -101,13 +101,16 @@ for iter=0:niter,
 %     B = [1, 3, 2,1,2];
     N = size(RX, 2);
     cos_X = zeros(1, N);
-    D_norm = sqrt(sum(D{i}.*D{i})); % d * h
-    X_norm = sqrt(sum(RX(len0(i):len1(i), :) .* RX(len0(i):len1(i), :))); % d * N
-    DX_norm = zeros(N, 1);
+%     D_norm = sqrt(sum(D{i}.*D{i})); % d * h
+%     X_norm = sqrt(sum(RX(len0(i):len1(i), :) .* RX(len0(i):len1(i), :))); % d * N
+%     DX_norm = zeros(N, 1);
     cos_sum = zeros(1, h(i));
     for j=1:N
         cen_of_j = B(j, i);
-        cos_X(j) = 1+dot(D{i}(:,cen_of_j), RX(len0(i):len1(i), j)) / D_norm(cen_of_j) / X_norm(j);
+        % plan 1: cos + 1
+        % cos_X(j) = 1+dot(D{i}(:,cen_of_j), RX(len0(i):len1(i), j)) / D_norm(cen_of_j) / X_norm(j);
+        % plan 2: 1/dist
+        cos_X(j) = 1/(1+log(1+sum((D{i}(:,cen_of_j)- RX(len0(i):len1(i), j)).^2)));
         cos_sum(cen_of_j) = cos_sum(cen_of_j) + cos_X(j);
     end
     D{i} = single(zeros(size(D{i})));
