@@ -109,8 +109,10 @@ for iter=0:niter,
         cen_of_j = B(j, i);
         % plan 1: cos + 1
         % cos_X(j) = 1+dot(D{i}(:,cen_of_j), RX(len0(i):len1(i), j)) / D_norm(cen_of_j) / X_norm(j);
-        % plan 2: 1/dist
-        cos_X(j) = 1/(1+log(1+sum((D{i}(:,cen_of_j)- RX(len0(i):len1(i), j)).^2)));
+        % plan 2: 1/log(dist)
+        % cos_X(j) = 1/(1+log(1+sum((D{i}(:,cen_of_j)- RX(len0(i):len1(i), j)).^2)));
+        % plan 3: 1/dist
+        cos_X(j) = 1/(1+sum((D{i}(:,cen_of_j)- RX(len0(i):len1(i), j)).^2));
         cos_sum(cen_of_j) = cos_sum(cen_of_j) + cos_X(j);
     end
     D{i} = single(zeros(size(D{i})));
