@@ -15,5 +15,6 @@ clear
 
 demo_fun('DEEP_DATASET')
 demo_fun('SIFT_DATASET')
+demo_fun('SIFTSMALL_DATASET')
 demo_fun('GIST_DATASET')
 demo_fun('CONVNET_DATASET')

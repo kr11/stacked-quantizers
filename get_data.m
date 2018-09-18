@@ -1,5 +1,6 @@
 function [ X_train, X_test, X_base, gt, nquery ] = get_data( data_set_name, nquery, K)
-    parent_dir = '/Users/kangrong/data/image_dataset/';
+%     parent_dir = '/Users/kangrong/data/image_dataset/';
+    parent_dir = 'data/';
 %     parent_dir = '/home/caoyue/kangrong/code/lopq/data/';
     % Load training, query and base datasets, and the query ground truth.
     if strcmp(data_set_name, 'CONVNET_DATASET')
@@ -25,6 +26,18 @@ function [ X_train, X_test, X_base, gt, nquery ] = get_data( data_set_name, nque
         X_test  = X_test(:, 1:nquery);
         
         gt      = ivecs_read([parent_dir, 'sift/sift_groundtruth.ivecs']); 
+        gt      = gt';
+        gt      = gt(1:nquery, 1:K)'+1;
+    elseif strcmp(data_set_name, 'SIFTSMALL_DATASET')
+        % Load sift
+        X_train = fvecs_read([parent_dir, 'siftsmall/siftsmall_learn.fvecs']);
+        X_base  = fvecs_read([parent_dir, 'siftsmall/siftsmall_base.fvecs']);
+        
+        X_test  = fvecs_read([parent_dir, 'siftsmall/siftsmall_query.fvecs']);
+        nquery  = min(size( X_test, 2 ), nquery); % Number of query vectors.
+        X_test  = X_test(:, 1:nquery);
+        
+        gt      = ivecs_read([parent_dir, 'siftsmall/siftsmall_groundtruth.ivecs']); 
         gt      = gt';
         gt      = gt(1:nquery, 1:K)'+1;
     elseif strcmp(data_set_name, 'DEEP_DATASET')
